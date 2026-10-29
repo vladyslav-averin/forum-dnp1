@@ -1,7 +1,21 @@
 ﻿@page "/"
+@inject NavigationManager NavMgr
 
 <PageTitle>Forum</PageTitle>
 
 <h1>Forum</h1>
+
+<AuthorizeView>
+    <Authorized>
+        <h3>Hello, @context.User.Identity?.Name</h3>
+    </Authorized>
+    <NotAuthorized>
+        <p>You are not logged in.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+<p>
+    <button class="btn btn-primary" @onclick='() => NavMgr.NavigateTo("login")'>Go to login</button>
+</p>
 
 <a href="posts">View posts</a>
