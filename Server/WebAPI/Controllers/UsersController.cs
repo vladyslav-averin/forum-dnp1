@@ -1,6 +1,7 @@
 using ApiContracts;
 using Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RepositoryContracts;
 
 namespace WebAPI.Controllers;
@@ -108,7 +109,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<UserDto>> GetUsers([FromQuery] string? userName = null)
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers([FromQuery] string? userName = null)
     {
         try
         {
@@ -117,14 +118,14 @@ public class UsersController : ControllerBase
             if (!string.IsNullOrEmpty(userName))
             {
                 users = users.Where(user =>
-                    user.UserName.Contains(userName, StringComparison.OrdinalIgnoreCase));
+                    user.UserName.ToLower().Contains(userName.ToLower()));
             }
 
-            List<UserDto> dtos = users.Select(user => new UserDto
+            List<UserDto> dtos = await users.Select(user => new UserDto
             {
                 Id = user.Id,
                 UserName = user.UserName
-            }).ToList();
+            }).ToListAsync();
 
             return Ok(dtos);
         }
@@ -154,16 +155,14 @@ public class UsersController : ControllerBase
         }
     }
 
-    private Task VerifyUserNameIsAvailableAsync(string userName)
+    private async Task VerifyUserNameIsAvailableAsync(string userName)
     {
-        bool userExists = userRepo.GetMany().Any(user =>
-            user.UserName.Equals(userName, StringComparison.OrdinalIgnoreCase));
+        bool userExists = await userRepo.GetMany().AnyAsync(user =>
+            user.UserName.ToLower() == userName.ToLower());
 
         if (userExists)
         {
             throw new ArgumentException("This username is already taken.");
         }
-
-        return Task.CompletedTask;
     }
 }

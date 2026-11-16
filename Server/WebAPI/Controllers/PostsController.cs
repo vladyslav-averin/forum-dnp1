@@ -1,6 +1,7 @@
 using ApiContracts;
 using Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RepositoryContracts;
 
 namespace WebAPI.Controllers;
@@ -108,7 +109,7 @@ public class PostsController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<IEnumerable<PostDto>> GetPosts(
+    public async Task<ActionResult<IEnumerable<PostDto>>> GetPosts(
         [FromQuery] string? title = null, [FromQuery] int? userId = null)
     {
         try
@@ -118,7 +119,7 @@ public class PostsController : ControllerBase
             if (!string.IsNullOrEmpty(title))
             {
                 posts = posts.Where(post =>
-                    post.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+                    post.Title.ToLower().Contains(title.ToLower()));
             }
 
             if (userId.HasValue)
@@ -126,13 +127,13 @@ public class PostsController : ControllerBase
                 posts = posts.Where(post => post.UserId == userId.Value);
             }
 
-            List<PostDto> dtos = posts.Select(post => new PostDto
+            List<PostDto> dtos = await posts.Select(post => new PostDto
             {
                 Id = post.Id,
                 Title = post.Title,
                 Body = post.Body,
                 UserId = post.UserId
-            }).ToList();
+            }).ToListAsync();
 
             return Ok(dtos);
         }
